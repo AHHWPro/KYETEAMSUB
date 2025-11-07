@@ -5,24 +5,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KYE BEEZY SERVER TEAM SUBMISSION</title>
   <meta name="description" content="Apply to join the KYE BEEZY Server Team." />
-  <!-- Tailwind CDN (JIT) -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    /* 背景漸層與玻璃霧面 */
-    .glass { backdrop-filter: blur(14px); background: rgba(255,255,255,0.08); }
-    .glow { box-shadow: 0 10px 25px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.06) inset; }
-    /* 成功/錯誤提示 */
-    .toast { position: fixed; right: 1rem; top: 1rem; z-index: 50; }
-    /* 隱形防機器人欄位 */
-    .hp { position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden; }
+    :root{
+      --bg1:#0b0618;   /* 深黑紫 */
+      --bg2:#1a0f3a;   /* 次深紫 */
+      --accent:#7c3aed;/* 紫色重點 */
+      --glass:rgba(255,255,255,0.08);
+      --glass-border:rgba(255,255,255,0.10);
+    }
+    html,body{height:100%}
+    body{
+      background: radial-gradient(1200px 800px at 20% 0%, #1b1141 0%, transparent 60%),
+                  radial-gradient(1000px 700px at 90% 10%, #2a175f 0%, transparent 60%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      color:#e5e7eb;
+    }
+    /* 液態玻璃卡片 */
+    .glass{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--glass-border);
+      backdrop-filter: blur(16px) saturate(120%);
+      -webkit-backdrop-filter: blur(16px) saturate(120%);
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    /* 玻璃亮邊 */
+    .glass-ring{
+      position:relative;
+      overflow:hidden;
+    }
+    .glass-ring::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: conic-gradient(from 180deg at 50% 50%, rgba(124,58,237,.0), rgba(124,58,237,.7), rgba(124,58,237,.0));
+      filter: blur(14px);
+      opacity:.55;
+      pointer-events:none;
+    }
+    /* 漸層按鈕液態高光 */
+    .btn{
+      background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+      box-shadow: 0 10px 25px rgba(124,58,237,.35);
+    }
+    .btn:hover{ filter:brightness(1.06) }
+    /* 液滴背景（Gooey） */
+    #blobs{
+      position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+      filter:url(#goo);
+    }
+    .blob{
+      position:absolute; width:500px; height:500px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, rgba(124,58,237,.35), rgba(124,58,237,.08) 60%, transparent 70%);
+      animation: float 16s ease-in-out infinite;
+      mix-blend-mode: screen;
+    }
+    .blob.b2{ width:420px; height:420px; left:70%; top:20%; animation-duration:18s; animation-delay:-4s}
+    .blob.b3{ width:560px; height:560px; left:10%; top:60%; animation-duration:22s; animation-delay:-7s}
+    @keyframes float{
+      0%,100%{ transform: translateY(-20px) translateX(0) scale(1) }
+      50%{ transform: translateY(20px) translateX(15px) scale(1.06) }
+    }
+    /* 輸入框聚焦邊緣光 */
+    .field{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field:focus{
+      outline: none;
+      border-color: rgba(124,58,237,.7);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.25);
+    }
+    /* Toast */
+    .toast{ position:fixed; right:1rem; top:1rem; z-index:50 }
+    /* honeypot */
+    .hp{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-gray-100">
-  <header class="max-w-5xl mx-auto px-4 pt-10 pb-4">
-    <div class="flex items-center gap-3">
-      <div class="p-2 rounded-xl glass glow">
+<body class="min-h-screen">
+  <!-- Gooey filter for blobs -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <filter id="goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur"/>
+        <feColorMatrix in="blur" mode="matrix"
+          values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  0 0 0 25 -12" result="goo"/>
+        <feBlend in="SourceGraphic" in2="goo"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Animated blobs -->
+  <div id="blobs" aria-hidden="true">
+    <div class="blob" style="left:-6%; top:-8%"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+  <header class="relative z-10 max-w-5xl mx-auto px-4 pt-10 pb-4">
+    <div class="glass glass-ring rounded-2xl p-4 md:p-5 flex items-center gap-3">
+      <div class="p-2 rounded-xl bg-white/5 border border-white/10">
         <i data-lucide="shield-check" class="w-6 h-6"></i>
       </div>
       <div>
@@ -32,76 +122,76 @@
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 pb-16">
-    <div class="glass glow rounded-2xl p-6 md:p-8">
-      <form id="appForm" class="grid grid-cols-1 md:grid-cols-2 gap-5 relative">
-        <!-- 防機器人 honeypot -->
-        <label class="hp">Leave this empty <input type="text" name="website" autocomplete="off"></label>
+  <main class="relative z-10 max-w-5xl mx-auto px-4 pb-16">
+    <div class="glass glass-ring rounded-3xl p-6 md:p-10">
+      <form id="appForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+        <!-- honeypot -->
+        <label class="hp">Do not fill<input type="text" name="website" autocomplete="off"></label>
 
         <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm mb-2">Discord Username (With @) <span class="text-red-400">*</span></label>
-            <input required name="discord" placeholder="@yourname" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" />
+            <input required name="discord" placeholder="@yourname" class="field w-full px-4 py-3 rounded-xl" />
           </div>
           <div>
             <label class="block text-sm mb-2">Time Zone (Location) <span class="text-red-400">*</span></label>
-            <input required name="timezone" placeholder="UTC+8 Taipei" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" />
+            <input required name="timezone" placeholder="UTC+8 Taipei" class="field w-full px-4 py-3 rounded-xl" />
           </div>
           <div>
             <label class="block text-sm mb-2">Gender</label>
-            <input name="gender" placeholder="M / F / Other / Prefer not to say" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" />
+            <input name="gender" placeholder="M / F / Other / Prefer not to say" class="field w-full px-4 py-3 rounded-xl" />
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
           <div>
             <label class="block text-sm mb-2">Age</label>
-            <input type="number" min="10" max="120" name="age" placeholder="18" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" />
+            <input type="number" min="10" max="120" name="age" placeholder="18" class="field w-full px-4 py-3 rounded-xl" />
           </div>
           <div class="md:col-span-2">
             <label class="block text-sm mb-2">Languages You Speak <span class="text-red-400">*</span></label>
-            <input required name="languages" placeholder="English, 中文, ..." class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" />
+            <input required name="languages" placeholder="English, 中文, ..." class="field w-full px-4 py-3 rounded-xl" />
           </div>
         </div>
 
         <div class="md:col-span-2">
           <label class="block text-sm mb-2">What skills or talents are you best at? <span class="text-red-400">*</span></label>
-          <textarea required name="skills" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" placeholder="e.g., moderation, design, video editing, coding, events, community..."></textarea>
+          <textarea required name="skills" rows="3" class="field w-full px-4 py-3 rounded-xl" placeholder="e.g., moderation, design, video editing, coding, events, community..."></textarea>
         </div>
 
         <div class="md:col-span-2">
-          <label class="block text-sm mb-2">Previous team or server staff experience?</label>
-          <textarea name="experience" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" placeholder="If yes, describe what you did and outcomes."></textarea>
+          <label class="block text-sm mb-2">Do you have any previous team or server staff experience? If yes, describe it.</label>
+          <textarea name="experience" rows="3" class="field w-full px-4 py-3 rounded-xl" placeholder="What you did and outcomes."></textarea>
         </div>
 
         <div>
-          <label class="block text-sm mb-2">Role or position most interested in <span class="text-red-400">*</span></label>
-          <input required name="role" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" placeholder="Moderator, Social, Designer, Editor, Dev, Host..." />
+          <label class="block text-sm mb-2">What role or position are you most interested in? <span class="text-red-400">*</span></label>
+          <input required name="role" class="field w-full px-4 py-3 rounded-xl" placeholder="Moderator, Social, Designer, Editor, Dev, Host..." />
         </div>
 
         <div>
           <label class="block text-sm mb-2">Why do you want to join the KYE BEEZY Team? <span class="text-red-400">*</span></label>
-          <input required name="why" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" placeholder="Your motivation and goals." />
+          <input required name="why" class="field w-full px-4 py-3 rounded-xl" placeholder="Your motivation and goals." />
         </div>
 
         <div>
-          <label class="block text-sm mb-2">Daily Discord activity</label>
-          <input name="activity" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" placeholder="e.g., 2–4 hours, mostly evenings." />
+          <label class="block text-sm mb-2">How active are you on Discord each day?</label>
+          <input name="activity" class="field w-full px-4 py-3 rounded-xl" placeholder="e.g., 2–4 hours, evenings." />
         </div>
 
         <div>
-          <label class="block text-sm mb-2">Handle rude or disrespectful chat?</label>
-          <input name="handleRude" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" placeholder="Your de-escalation approach." />
+          <label class="block text-sm mb-2">How would you handle someone saying something rude or disrespectful in chat?</label>
+          <input name="handleRude" class="field w-full px-4 py-3 rounded-xl" placeholder="De-escalation approach." />
         </div>
 
         <div>
-          <label class="block text-sm mb-2">Deal with conflict inside a team?</label>
-          <input name="conflict" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" placeholder="Your conflict-resolution method." />
+          <label class="block text-sm mb-2">How do you usually deal with conflict inside a team?</label>
+          <input name="conflict" class="field w-full px-4 py-3 rounded-xl" placeholder="Conflict-resolution method." />
         </div>
 
         <div>
-          <label class="block text-sm mb-2">Comfortable joining a voice call for interview? <span class="text-red-400">*</span></label>
-          <select required name="vc" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none">
+          <label class="block text-sm mb-2">Are you comfortable joining a voice call for an interview? <span class="text-red-400">*</span></label>
+          <select required name="vc" class="field w-full px-4 py-3 rounded-xl">
             <option value="">Select</option>
             <option>Yes</option>
             <option>No</option>
@@ -109,8 +199,8 @@
         </div>
 
         <div>
-          <label class="block text-sm mb-2">Mic and stable internet? <span class="text-red-400">*</span></label>
-          <select required name="micNet" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none">
+          <label class="block text-sm mb-2">Do you have a microphone and stable internet connection? <span class="text-red-400">*</span></label>
+          <select required name="micNet" class="field w-full px-4 py-3 rounded-xl">
             <option value="">Select</option>
             <option>Yes</option>
             <option>No</option>
@@ -119,8 +209,8 @@
         </div>
 
         <div class="md:col-span-2">
-          <label class="block text-sm mb-2">Anything else?</label>
-          <textarea name="extra" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-400 outline-none" placeholder="Anything we should know."></textarea>
+          <label class="block text-sm mb-2">Anything else you’d like us to know about you?</label>
+          <textarea name="extra" rows="3" class="field w-full px-4 py-3 rounded-xl" placeholder="Anything we should know."></textarea>
         </div>
 
         <div class="md:col-span-2 flex items-center gap-3">
@@ -128,78 +218,90 @@
           <label for="agree" class="text-sm text-gray-300">I confirm all information is accurate. <span class="text-red-400">*</span></label>
         </div>
 
-        <div class="md:col-span-2 flex flex-wrap gap-3 pt-2">
-          <button id="submitBtn" type="submit" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 active:scale-95 transition">
+        <div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
+          <button id="submitBtn" type="submit" class="btn inline-flex items-center gap-2 px-5 py-3 rounded-2xl">
             <i data-lucide="send" class="w-4 h-4"></i><span>Submit</span>
           </button>
-          <button id="resetBtn" type="button" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition">
+          <button id="resetBtn" type="button" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10">
             <i data-lucide="rotate-ccw" class="w-4 h-4"></i><span>Reset</span>
           </button>
-          <p class="text-xs text-gray-400">Submissions are rate-limited locally to reduce spam.</p>
+          <span class="text-xs text-gray-400">Local rate limit: 5 minutes.</span>
         </div>
       </form>
     </div>
   </main>
 
   <div id="toast" class="toast hidden">
-    <div id="toastBox" class="rounded-xl glass glow px-4 py-3 text-sm"></div>
+    <div id="toastBox" class="glass rounded-xl px-4 py-3 text-sm"></div>
   </div>
 
-  <footer class="max-w-5xl mx-auto px-4 pb-10 text-xs text-gray-500">
+  <footer class="relative z-10 max-w-5xl mx-auto px-4 pb-10 text-xs text-gray-400">
     <p>© <span id="year"></span> KYE BEEZY. All rights reserved.</p>
   </footer>
 
   <script>
-    // 初始化圖示與年份
+    // 年份與圖示
     document.getElementById('year').textContent = new Date().getFullYear();
     window.addEventListener('load', () => { if (window.lucide) lucide.createIcons(); });
 
-    // 你的 Discord Webhook
-    const WEBHOOK_URL = "https://discord.com/api/webhooks/1436316194507587647/EUiGxHpkKqhbKVwmInykJ_2J3gu4mgcgHlf2woUUBfjwvwgDdiaO8CbU5DpmTcpm4KQO";
+    // ---- Webhook 混淆：組裝函式 ----
+    // 用法：
+    // 1) 將完整 webhook 切兩段：
+    //    part1 固定: "https://discord.com/api/"
+    //    part2 例如: "webhooks/1436.../EUiGx..."
+    // 2) 在瀏覽器 Console 生成 p2r：
+    //    const part2 = "webhooks/...你的剩餘";
+    //    const p2r = btoa(part2).split("").reverse().join("");
+    //    console.log(p2r) -> 貼到 P2R_PLACEHOLDER
+    function getUrl(){
+      const p1 = "aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkv";  // base64("https://discord.com/api/")
+      const p2r = "P2R_PLACEHOLDER";                   // 反轉後的 base64(part2)
+      const part2 = atob(p2r.split("").reverse().join(""));
+      return atob(p1) + part2;
+    }
 
     // Toast
     function toast(msg, ok=true){
       const t = document.getElementById('toast');
       const b = document.getElementById('toastBox');
       b.textContent = msg;
-      b.className = "rounded-xl glass glow px-4 py-3 text-sm " + (ok ? "text-green-300" : "text-red-300");
+      b.className = "glass rounded-xl px-4 py-3 text-sm " + (ok ? "text-green-300" : "text-red-300");
       t.classList.remove('hidden');
-      setTimeout(()=> t.classList.add('hidden'), 3800);
+      setTimeout(()=> t.classList.add('hidden'), 3600);
     }
 
-    // 簡易本地限流：5 分鐘內禁止重送
+    // 簡易本地限流：5 分鐘
     function canSubmit(){
       const ts = Number(localStorage.getItem('kb_last_submit') || 0);
-      const now = Date.now();
-      return (now - ts) > 5 * 60 * 1000;
+      return (Date.now() - ts) > 5*60*1000;
     }
     function markSubmit(){ localStorage.setItem('kb_last_submit', String(Date.now())); }
 
-    // 建立 Discord embed 內容
-    function buildEmbed(data){
+    // 組 Discord embed
+    function buildEmbed(d){
       const fields = [
-        ["Discord Username (With @)", data.discord],
-        ["Time Zone (Location)", data.timezone],
-        ["Gender", data.gender || "—"],
-        ["Age", data.age || "—"],
-        ["Languages You Speak", data.languages],
-        ["Best skills or talents", data.skills],
-        ["Previous team/server staff experience", data.experience || "—"],
-        ["Role/position most interested in", data.role],
-        ["Why join KYE BEEZY Team", data.why],
-        ["Daily Discord activity", data.activity || "—"],
-        ["Handle rude/disrespectful chat", data.handleRude || "—"],
-        ["Deal with team conflict", data.conflict || "—"],
-        ["VC interview", data.vc],
-        ["Mic + stable internet", data.micNet],
-        ["Anything else", data.extra || "—"],
-      ].map(([name, value]) => ({ name, value: String(value).slice(0, 1024), inline: false }));
+        ["Discord Username (With @)", d.discord],
+        ["Time Zone (Location)", d.timezone],
+        ["Gender", d.gender || "—"],
+        ["Age", d.age || "—"],
+        ["Languages You Speak", d.languages],
+        ["What skills or talents are you best at?", d.skills],
+        ["Previous team/server staff experience", d.experience || "—"],
+        ["Role or position", d.role],
+        ["Why join KYE BEEZY Team", d.why],
+        ["Daily Discord activity", d.activity || "—"],
+        ["Handle rude/disrespectful chat", d.handleRude || "—"],
+        ["Deal with team conflict", d.conflict || "—"],
+        ["VC interview", d.vc],
+        ["Mic + stable internet", d.micNet],
+        ["Anything else", d.extra || "—"],
+      ].map(([name, value]) => ({ name, value: String(value).slice(0,1024), inline: false }));
 
       return {
         username: "KYE BEEZY Team Form",
         embeds: [{
           title: "New Team Application",
-          color: 0x6366F1, // indigo-500
+          color: 0x7c3aed,
           timestamp: new Date().toISOString(),
           fields
         }]
@@ -215,52 +317,38 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (form.website && form.website.value) return;  // honeypot
 
-      // honeypot
-      if (form.website && form.website.value) { return; }
-
-      if (!canSubmit()){
-        toast("請稍後再送出。5 分鐘後可再次提交。", false);
-        return;
-      }
+      if (!canSubmit()){ toast("請稍後再送出。5 分鐘後可重試。", false); return; }
 
       submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+      submitBtn.classList.add('opacity-60','cursor-not-allowed');
 
-      const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
+      const data = Object.fromEntries(new FormData(form).entries());
+      // 必填檢查
+      const required = ["discord","timezone","languages","skills","role","why","vc","micNet"];
+      for (const k of required){ if(!data[k]){ toast("請完成必填欄位。", false); submitBtn.disabled=false; submitBtn.classList.remove('opacity-60','cursor-not-allowed'); return; } }
 
-      // 基本客戶端驗證
-      if (!data.discord || !data.timezone || !data.languages || !data.skills || !data.role || !data.why || !data.vc || !data.micNet){
-        toast("請完成必填欄位。", false);
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
-        return;
-      }
-
-      // 組裝 payload
       const payload = buildEmbed(data);
 
-      try {
-        const res = await fetch(WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      try{
+        const res = await fetch(getUrl(), {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
           body: JSON.stringify(payload)
         });
-
-        if (res.ok) {
+        if(res.ok){
           markSubmit();
           form.reset();
           toast("已送出。感謝你的申請。");
-        } else {
-          const text = await res.text().catch(()=> "");
-          toast("送出失敗：" + res.status + " " + text, false);
+        }else{
+          toast("送出失敗：" + res.status + " " + (await res.text().catch(()=>'')), false);
         }
-      } catch (err) {
-        toast("網路錯誤或被攔截：" + (err?.message || err), false);
-      } finally {
+      }catch(err){
+        toast("網路或被攔截：" + (err?.message || err), false);
+      }finally{
         submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        submitBtn.classList.remove('opacity-60','cursor-not-allowed');
       }
     });
   </script>
