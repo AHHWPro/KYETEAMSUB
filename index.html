@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KYE BEEZY SERVER TEAM SUBMISSION</title>
   <meta name="description" content="Apply to join the KYE BEEZY Server Team." />
-  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root{
+      /* === Single source of truth === */
+      --radius: 22px;               /* corner radius for cards/buttons/fields */
+      --fade: 78%;                  /* radial fade stop, same on all layers */
+      --blob: 48vmin;               /* base blob diameter */
       --bg1:#0b0618;
       --bg2:#1a0f3a;
       --accent:#7c3aed;
@@ -18,81 +20,60 @@
       --glass-border:rgba(255,255,255,0.10);
     }
 
-    /* base */
     html,body{height:100%}
     html, body { background-color: var(--bg2); }
 
-    /* smoother, page-wide gradients */
+    /* Background layers share the same fade ratio */
     body{
       background:
-        radial-gradient(120% 80% at 20% 0%, #1b1141 0%, rgba(27,17,65,0) 78%),
-        radial-gradient(110% 75% at 90% 10%, #2a175f 0%, rgba(42,23,95,0) 78%),
+        radial-gradient(120% 80% at 20% 0%, #1b1141 0%, rgba(27,17,65,0) var(--fade)),
+        radial-gradient(110% 75% at 90% 10%, #2a175f 0%, rgba(42,23,95,0) var(--fade)),
         linear-gradient(135deg, var(--bg1), var(--bg2));
       color:#e5e7eb;
-      /* avoid compositing seams on some GPUs */
+      background-attachment: fixed, fixed, fixed;
       will-change: transform;
       transform: translateZ(0);
-      background-attachment: fixed, fixed, fixed;
     }
 
-    /* full-page dim overlay that never ends on scroll */
+    /* Full-page dim layer uses the same fade ratio */
     #shade{
       position:fixed; inset:0; z-index:1; pointer-events:none;
       background:
-        radial-gradient(140% 100% at 50% -20%, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) 60%),
-        radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) 60%),
+        radial-gradient(140% 100% at 50% -20%, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) var(--fade)),
+        radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) var(--fade)),
         linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.10) 35%, rgba(0,0,0,.18));
-      mix-blend-mode: normal;
     }
 
+    /* Glass UI with unified radius */
     .glass{
       background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
       border:1px solid var(--glass-border);
+      border-radius: var(--radius);
       backdrop-filter: blur(16px) saturate(120%);
       -webkit-backdrop-filter: blur(16px) saturate(120%);
       box-shadow:
         0 10px 30px rgba(0,0,0,.35),
         inset 0 1px 0 rgba(255,255,255,.08);
     }
-    .glass-ring{ position:relative; overflow:hidden; }
+    .glass-ring{ position:relative; overflow:hidden; border-radius: var(--radius); }
     .glass-ring::before{
-      content:"";
-      position:absolute; inset:-2px;
+      content:""; position:absolute; inset:-2px; border-radius: inherit;
       background: conic-gradient(from 180deg at 50% 50%, rgba(124,58,237,.0), rgba(124,58,237,.7), rgba(124,58,237,.0));
-      filter: blur(14px);
-      opacity:.55;
-      pointer-events:none;
+      filter: blur(14px); opacity:.55; pointer-events:none;
     }
 
     .btn{
       background: linear-gradient(180deg, #8b5cf6, #6d28d9);
       box-shadow: 0 10px 25px rgba(124,58,237,.35);
+      border-radius: var(--radius);
     }
     .btn:hover{ filter:brightness(1.06) }
 
-    /* animated blobs */
-    #blobs{
-      position:fixed; inset:0; pointer-events:none; z-index:2; overflow:hidden;
-      /* keep goo on children to reduce page-wide recomposition */
-      filter:none;
-    }
-    .blob{
-      position:absolute; width:48vmin; height:48vmin; border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, rgba(124,58,237,.35), rgba(124,58,237,.08) 60%, rgba(124,58,237,0) 72%);
-      animation: float 16s ease-in-out infinite;
-      mix-blend-mode: screen;
-      filter: url(#goo);
-    }
-    .blob.b2{ width:42vmin; height:42vmin; left:70%; top:20%; animation-duration:18s; animation-delay:-4s}
-    .blob.b3{ width:56vmin; height:56vmin; left:10%; top:60%; animation-duration:22s; animation-delay:-7s}
-    @keyframes float{
-      0%,100%{ transform: translateY(-20px) translateX(0) scale(1) }
-      50%{ transform: translateY(20px) translateX(15px) scale(1.06) }
-    }
-
+    /* Inputs share the same radius */
     .field{
       background: rgba(255,255,255,.05);
       border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
       transition: border-color .2s, box-shadow .2s;
     }
     .field:focus{
@@ -101,12 +82,35 @@
       box-shadow: 0 0 0 3px rgba(124,58,237,.25);
     }
 
+    /* Animated blobs sized from the same base and with same fade shape */
+    #blobs{
+      position:fixed; inset:0; pointer-events:none; z-index:2; overflow:hidden;
+    }
+    .blob{
+      position:absolute; width:var(--blob); height:var(--blob); border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, rgba(124,58,237,.35), rgba(124,58,237,.08) 60%, rgba(124,58,237,0) var(--fade));
+      animation: float 16s ease-in-out infinite;
+      mix-blend-mode: screen;
+      filter: url(#goo);
+    }
+    .blob.b2{ width:calc(var(--blob)*0.88); height:calc(var(--blob)*0.88); left:70%; top:20%; animation-duration:18s; animation-delay:-4s}
+    .blob.b3{ width:calc(var(--blob)*1.16); height:calc(var(--blob)*1.16); left:10%; top:60%; animation-duration:22s; animation-delay:-7s}
+    @keyframes float{
+      0%,100%{ transform: translateY(-20px) translateX(0) scale(1) }
+      50%{ transform: translateY(20px) translateX(15px) scale(1.06) }
+    }
+
     .toast{ position:fixed; right:1rem; top:1rem; z-index:50 }
     .hp{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden }
+
+    /* Override Tailwind rounded-* utilities on specific blocks to sync radius */
+    header .rounded-2xl,
+    main .rounded-3xl,
+    .toast .rounded-xl { border-radius: var(--radius) !important; }
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- Gooey filter defs -->
+  <!-- SVG filter -->
   <svg width="0" height="0" style="position:absolute">
     <defs>
       <filter id="goo">
@@ -121,10 +125,8 @@
     </defs>
   </svg>
 
-  <!-- persistent dim overlay -->
+  <!-- unified overlays -->
   <div id="shade" aria-hidden="true"></div>
-
-  <!-- Animated blobs -->
   <div id="blobs" aria-hidden="true">
     <div class="blob" style="left:-6%; top:-8%"></div>
     <div class="blob b2"></div>
@@ -132,8 +134,8 @@
   </div>
 
   <header class="relative z-10 max-w-5xl mx-auto px-4 pt-10 pb-4">
-    <div class="glass glass-ring rounded-2xl p-4 md:p-5 flex items-center gap-3">
-      <div class="p-2 rounded-xl bg-white/5 border border-white/10">
+    <div class="glass glass-ring p-4 md:p-5 flex items-center gap-3">
+      <div class="p-2 rounded-xl bg-white/5 border border-white/10" style="border-radius: calc(var(--radius) - 6px);">
         <i data-lucide="shield-check" class="w-6 h-6"></i>
       </div>
       <div>
@@ -144,75 +146,74 @@
   </header>
 
   <main class="relative z-10 max-w-5xl mx-auto px-4 pb-16">
-    <div class="glass glass-ring rounded-3xl p-6 md:p-10">
+    <div class="glass glass-ring p-6 md:p-10">
       <form id="appForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-        <!-- honeypot -->
         <label class="hp">Do not fill<input type="text" name="website" autocomplete="off"></label>
 
         <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm mb-2">Discord Username (with @) <span class="text-red-400">*</span></label>
-            <input required name="discord" placeholder="@yourname" class="field w-full px-4 py-3 rounded-xl" />
+            <input required name="discord" placeholder="@yourname" class="field w-full px-4 py-3" />
           </div>
           <div>
             <label class="block text-sm mb-2">Time Zone (Location) <span class="text-red-400">*</span></label>
-            <input required name="timezone" placeholder="UTC+8 Taipei" class="field w-full px-4 py-3 rounded-xl" />
+            <input required name="timezone" placeholder="UTC+8 Taipei" class="field w-full px-4 py-3" />
           </div>
           <div>
             <label class="block text-sm mb-2">Gender</label>
-            <input name="gender" placeholder="M / F / Other / Prefer not to say" class="field w-full px-4 py-3 rounded-xl" />
+            <input name="gender" placeholder="M / F / Other / Prefer not to say" class="field w-full px-4 py-3" />
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
           <div>
             <label class="block text-sm mb-2">Age</label>
-            <input type="number" min="10" max="120" name="age" placeholder="18" class="field w-full px-4 py-3 rounded-xl" />
+            <input type="number" min="10" max="120" name="age" placeholder="18" class="field w-full px-4 py-3" />
           </div>
           <div class="md:col-span-2">
             <label class="block text-sm mb-2">Languages You Speak <span class="text-red-400">*</span></label>
-            <input required name="languages" placeholder="English, Chinese, ..." class="field w-full px-4 py-3 rounded-xl" />
+            <input required name="languages" placeholder="English, Chinese, ..." class="field w-full px-4 py-3" />
           </div>
         </div>
 
         <div class="md:col-span-2">
           <label class="block text-sm mb-2">What skills or talents are you best at? <span class="text-red-400">*</span></label>
-          <textarea required name="skills" rows="3" class="field w-full px-4 py-3 rounded-xl" placeholder="e.g., moderation, design, video editing, coding, events, community..."></textarea>
+          <textarea required name="skills" rows="3" class="field w-full px-4 py-3" placeholder="e.g., moderation, design, video editing, coding, events, community..."></textarea>
         </div>
 
         <div class="md:col-span-2">
           <label class="block text-sm mb-2">Do you have previous team or server staff experience? If yes, describe it.</label>
-          <textarea name="experience" rows="3" class="field w-full px-4 py-3 rounded-xl" placeholder="What you did and the outcomes."></textarea>
+          <textarea name="experience" rows="3" class="field w-full px-4 py-3" placeholder="What you did and the outcomes."></textarea>
         </div>
 
         <div>
           <label class="block text-sm mb-2">Which role or position are you most interested in? <span class="text-red-400">*</span></label>
-          <input required name="role" class="field w-full px-4 py-3 rounded-xl" placeholder="Moderator, Social, Designer, Editor, Dev, Host..." />
+          <input required name="role" class="field w-full px-4 py-3" placeholder="Moderator, Social, Designer, Editor, Dev, Host..." />
         </div>
 
         <div>
           <label class="block text-sm mb-2">Why do you want to join the KYE BEEZY Team? <span class="text-red-400">*</span></label>
-          <input required name="why" class="field w-full px-4 py-3 rounded-xl" placeholder="Your motivation and goals." />
+          <input required name="why" class="field w-full px-4 py-3" placeholder="Your motivation and goals." />
         </div>
 
         <div>
           <label class="block text-sm mb-2">How active are you on Discord each day?</label>
-          <input name="activity" class="field w-full px-4 py-3 rounded-xl" placeholder="e.g., 2–4 hours, evenings." />
+          <input name="activity" class="field w-full px-4 py-3" placeholder="e.g., 2–4 hours, evenings." />
         </div>
 
         <div>
           <label class="block text-sm mb-2">How would you handle someone being rude or disrespectful in chat?</label>
-          <input name="handleRude" class="field w-full px-4 py-3 rounded-xl" placeholder="De-escalation approach." />
+          <input name="handleRude" class="field w-full px-4 py-3" placeholder="De-escalation approach." />
         </div>
 
         <div>
           <label class="block text-sm mb-2">How do you usually deal with conflict inside a team?</label>
-          <input name="conflict" class="field w-full px-4 py-3 rounded-xl" placeholder="Conflict-resolution method." />
+          <input name="conflict" class="field w-full px-4 py-3" placeholder="Conflict-resolution method." />
         </div>
 
         <div>
           <label class="block text-sm mb-2">Are you comfortable joining a voice call for an interview? <span class="text-red-400">*</span></label>
-          <select required name="vc" class="field w-full px-4 py-3 rounded-xl">
+          <select required name="vc" class="field w-full px-4 py-3">
             <option value="">Select</option>
             <option>Yes</option>
             <option>No</option>
@@ -221,7 +222,7 @@
 
         <div>
           <label class="block text-sm mb-2">Do you have a microphone and stable internet connection? <span class="text-red-400">*</span></label>
-          <select required name="micNet" class="field w-full px-4 py-3 rounded-xl">
+          <select required name="micNet" class="field w-full px-4 py-3">
             <option value="">Select</option>
             <option>Yes</option>
             <option>No</option>
@@ -231,7 +232,7 @@
 
         <div class="md:col-span-2">
           <label class="block text-sm mb-2">Anything else we should know?</label>
-          <textarea name="extra" rows="3" class="field w-full px-4 py-3 rounded-xl" placeholder="Add anything important."></textarea>
+          <textarea name="extra" rows="3" class="field w-full px-4 py-3" placeholder="Add anything important."></textarea>
         </div>
 
         <div class="md:col-span-2 flex items-center gap-3">
@@ -240,10 +241,10 @@
         </div>
 
         <div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
-          <button id="submitBtn" type="submit" class="btn inline-flex items-center gap-2 px-5 py-3 rounded-2xl">
+          <button id="submitBtn" type="submit" class="btn inline-flex items-center gap-2 px-5 py-3">
             <i data-lucide="send" class="w-4 h-4"></i><span>Submit</span>
           </button>
-          <button id="resetBtn" type="button" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10">
+          <button id="resetBtn" type="button" class="inline-flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 border border-white/10" style="border-radius: var(--radius);">
             <i data-lucide="rotate-ccw" class="w-4 h-4"></i><span>Reset</span>
           </button>
           <span class="text-xs text-gray-400">Local rate limit: 5 minutes.</span>
@@ -253,7 +254,7 @@
   </main>
 
   <div id="toast" class="toast hidden">
-    <div id="toastBox" class="glass rounded-xl px-4 py-3 text-sm"></div>
+    <div id="toastBox" class="glass px-4 py-3 text-sm"></div>
   </div>
 
   <footer class="relative z-10 max-w-5xl mx-auto px-4 pb-10 text-xs text-gray-400">
@@ -261,31 +262,26 @@
   </footer>
 
   <script>
-    // year + icons
     document.getElementById('year').textContent = new Date().getFullYear();
     window.addEventListener('load', () => { if (window.lucide) lucide.createIcons(); });
 
-    // direct webhook
     const WEBHOOK = "https://discord.com/api/webhooks/1436316194507587647/EUiGxHpkKqhbKVwmInykJ_2J3gu4mgcgHlf2woUUBfjwvwgDdiaO8CbU5DpmTcpm4KQO";
 
-    // toast
     function toast(msg, ok=true){
       const t = document.getElementById('toast');
       const b = document.getElementById('toastBox');
       b.textContent = msg;
-      b.className = "glass rounded-xl px-4 py-3 text-sm " + (ok ? "text-green-300" : "text-red-300");
+      b.className = "glass px-4 py-3 text-sm " + (ok ? "text-green-300" : "text-red-300");
       t.classList.remove('hidden');
       setTimeout(()=> t.classList.add('hidden'), 3600);
     }
 
-    // simple local rate limit: 5 minutes
     function canSubmit(){
       const ts = Number(localStorage.getItem('kb_last_submit') || 0);
       return (Date.now() - ts) > 5*60*1000;
     }
     function markSubmit(){ localStorage.setItem('kb_last_submit', String(Date.now())); }
 
-    // prettier discord embed
     function buildEmbed(d){
       const summary =
         `**Role:** ${d.role}\n`+
@@ -339,7 +335,6 @@
       };
     }
 
-    // form logic
     const form = document.getElementById('appForm');
     const resetBtn = document.getElementById('resetBtn');
     const submitBtn = document.getElementById('submitBtn');
@@ -348,7 +343,7 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (form.website && form.website.value) return;  // honeypot
+      if (form.website && form.website.value) return;
 
       if (!canSubmit()){ toast("Please try again later. You can submit once every 5 minutes.", false); return; }
 
