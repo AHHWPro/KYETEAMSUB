@@ -9,7 +9,6 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root{
-      /* unified ratios */
       --radius: 22px;
       --fade: 78%;
       --blob: 48vmin;
@@ -24,7 +23,7 @@
     html,body{height:100%}
     html, body { background-color: var(--bg2); overflow-x:hidden; color:#e5e7eb; }
 
-    /* fixed full-screen background to avoid scroll seams */
+    /* fixed full-screen background */
     #bg{
       position:fixed; inset:0; z-index:0; pointer-events:none;
       background:
@@ -32,10 +31,10 @@
         radial-gradient(120vmax 80vmax at 120% 0%, #2a175f 0%, rgba(42,23,95,0) var(--fade)),
         linear-gradient(135deg, var(--bg1), var(--bg2));
       background-repeat:no-repeat;
-      transform: translateZ(0); /* stabilize compositing */
+      transform: translateZ(0);
     }
 
-    /* soft, infinite dim overlay (no linear band) */
+    /* dim overlay */
     #shade{
       position:fixed; inset:0; z-index:1; pointer-events:none;
       background:
@@ -91,12 +90,31 @@
       border:1px solid rgba(255,255,255,.08);
       border-radius: var(--radius);
       transition: border-color .2s, box-shadow .2s;
+      color:#e5e7eb;
     }
     .field:focus{
       outline: none;
       border-color: rgba(124,58,237,.7);
       box-shadow: 0 0 0 3px rgba(124,58,237,.25);
     }
+
+    /* styled selects + dropdown options */
+    select.field{
+      appearance: none; -webkit-appearance:none; -moz-appearance:none;
+      background-color: rgba(124,58,237,.14);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23e5e7eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .9rem center;
+      padding-right: 2.5rem;
+      border-color: rgba(124,58,237,.35);
+      color:#e5e7eb;
+    }
+    select.field option{
+      background-color:#2a175f;
+      color:#e5e7eb;
+    }
+    /* hide default arrow in old IE/Edge */
+    select.field::-ms-expand{ display:none; }
 
     .toast{ position:fixed; right:1rem; top:1rem; z-index:50 }
     .hp{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden }
@@ -118,7 +136,7 @@
     </defs>
   </svg>
 
-  <!-- unified fixed layers -->
+  <!-- fixed layers -->
   <div id="bg" aria-hidden="true"></div>
   <div id="shade" aria-hidden="true"></div>
   <div id="blobs" aria-hidden="true">
@@ -224,9 +242,11 @@
           <p class="text-xs text-gray-400 mt-1">Check: <a href="https://speedtest.net" target="_blank" class="underline">speedtest.net</a></p>
         </div>
 
+        <!-- Avatar upload -->
         <div class="md:col-span-2">
-          <label class="block text-sm mb-2">Anything else we should know?</label>
-          <textarea name="extra" rows="3" class="field w-full px-4 py-3" placeholder="Add anything important."></textarea>
+          <label class="block text-sm mb-2">Avatar (optional)</label>
+          <input type="file" name="avatar" accept="image/*" class="field w-full px-4 py-3" />
+          <p class="text-xs text-gray-400 mt-1">PNG/JPG/WebP ≤ 5 MB. Will be shown in the Discord embed.</p>
         </div>
 
         <div class="md:col-span-2 flex items-center gap-3">
@@ -276,12 +296,14 @@
     }
     function markSubmit(){ localStorage.setItem('kb_last_submit', String(Date.now())); }
 
-    function buildEmbed(d){
+    function buildEmbed(d, avatarFilename){
       const summary =
         `**Role:** ${d.role}\n`+
         `**Timezone:** ${d.timezone}\n`+
         `**Languages:** ${d.languages}\n`+
         `**Activity:** ${d.activity || "—"}`;
+
+      const icon = avatarFilename ? `attachment://${avatarFilename}` : "https://cdn.discordapp.com/embed/avatars/1.png";
 
       const topInline = [
         { name: "Gender", value: d.gender || "—", inline: true },
@@ -311,8 +333,8 @@
           description: summary,
           color: 0x7c3aed,
           timestamp: new Date().toISOString(),
-          author: { name: d.discord, icon_url: "https://cdn.discordapp.com/embed/avatars/1.png" },
-          thumbnail: { url: "https://cdn.discordapp.com/embed/avatars/4.png" },
+          author: { name: d.discord, icon_url: icon },
+          thumbnail: { url: icon },
           fields: [
             ...topInline,
             divider,
@@ -324,7 +346,7 @@
             divider,
             ...full
           ],
-          footer: { text: "KYE BEEZY · Server Team", icon_url: "https://cdn.discordapp.com/embed/avatars/0.png" }
+          footer: { text: "KYE BEEZY · Server Team", icon_url: icon }
         }]
       };
     }
@@ -344,7 +366,8 @@
       submitBtn.disabled = true;
       submitBtn.classList.add('opacity-60','cursor-not-allowed');
 
-      const data = Object.fromEntries(new FormData(form).entries());
+      const fdForm = new FormData(form);
+      const data = Object.fromEntries(fdForm.entries());
       const required = ["discord","timezone","languages","skills","role","why","vc","micNet"];
       for (const k of required){
         if(!data[k]){
@@ -355,14 +378,26 @@
         }
       }
 
-      const payload = buildEmbed(data);
+      // avatar file
+      const avatarFile = form.avatar?.files?.[0] || null;
+      if (avatarFile && avatarFile.size > 5*1024*1024){
+        toast("Avatar is larger than 5 MB.", false);
+        submitBtn.disabled=false;
+        submitBtn.classList.remove('opacity-60','cursor-not-allowed');
+        return;
+      }
+      const avatarName = avatarFile ? (avatarFile.name || "avatar.png") : null;
+
+      // payload with attachment reference
+      const payload = buildEmbed(data, avatarName);
+
+      // multipart body
+      const fd = new FormData();
+      fd.append("payload_json", JSON.stringify(payload));
+      if (avatarFile) fd.append("files[0]", avatarFile, avatarName);
 
       try{
-        const res = await fetch(WEBHOOK, {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify(payload)
-        });
+        const res = await fetch(WEBHOOK, { method:"POST", body: fd });
         if(res.ok){
           markSubmit();
           form.reset();
