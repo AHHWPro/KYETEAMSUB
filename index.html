@@ -113,27 +113,66 @@
     select.field::-ms-expand{ display:none; }
 
     /* pretty file input */
-    .filebox{
-      display:flex; align-items:center; gap:.75rem;
-      padding:.5rem; border:1px solid rgba(255,255,255,.08);
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.05);
-    }
-    .filebox input[type="file"]{
-      position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer;
-    }
-    .filebtn{
-      position:relative;
-      padding:.6rem 1rem;
-      border-radius: calc(var(--radius) - 8px);
-      background: linear-gradient(180deg, #8b5cf6, #6d28d9);
-      border:1px solid rgba(124,58,237,.5);
-      font-weight:600;
-      white-space:nowrap;
-    }
-    .filename{ flex:1; min-width:0; color:#d1d5db; opacity:.9; }
-    .filename span{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
+    /* avatar upload styles */
+    .filebox {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: relative;
+    }
+    
+    .preview {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .filebtn {
+      background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(124,58,237,.35);
+      white-space: nowrap;
+    }
+    
+    .filebtn:hover {
+      filter: brightness(1.08);
+    }
+    
+    /* 這裡關鍵：input 只覆蓋在按鈕內，不會整頁可點 */
+    .filebtn input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .filename {
+      font-size: 0.875rem;
+      color: #cbd5e1;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: 180px;
+    }
+    
+
+
+
+    
     .preview{
       width:40px; height:40px; border-radius:9999px; overflow:hidden;
       border:1px solid rgba(255,255,255,.15);
@@ -268,17 +307,30 @@
           <p class="text-xs text-gray-400 mt-1">Check: <a href="https://speedtest.net" target="_blank" class="underline">speedtest.net</a></p>
         </div>
 
-        <!-- Avatar upload (pretty) -->
+
+        <!-- Avatar upload (pretty, fixed) -->
         <div class="md:col-span-2">
           <label class="block text-sm mb-2">Avatar (optional)</label>
-          <div class="filebox">
-            <div class="preview" id="avatarPreview"><i data-lucide="image" class="w-5 h-5 opacity-70"></i></div>
-            <div class="filebtn">Choose file</div>
-            <div class="filename"><span id="avatarName">No file selected</span></div>
-            <input type="file" name="avatar" id="avatarInput" accept="image/*">
+          <div class="filebox flex items-center gap-3">
+            <div class="preview" id="avatarPreview">
+              <i data-lucide="image" class="w-5 h-5 opacity-70"></i>
+            </div>
+        
+            <label class="filebtn relative overflow-hidden cursor-pointer">
+              Choose file
+              <input type="file" name="avatar" id="avatarInput" accept="image/*"
+                     class="absolute inset-0 opacity-0 cursor-pointer">
+            </label>
+        
+            <div class="filename">
+              <span id="avatarName">No file selected</span>
+            </div>
           </div>
-          <p class="text-xs text-gray-400 mt-1">PNG/JPG/WebP ≤ 5 MB. Will appear in the Discord embed.</p>
+          <p class="text-xs text-gray-400 mt-1">
+            PNG/JPG/WebP ≤ 5 MB. Will appear in the Discord embed.
+          </p>
         </div>
+
 
         <div class="md:col-span-2 flex items-center gap-3">
           <input id="agree" type="checkbox" required class="w-4 h-4" />
