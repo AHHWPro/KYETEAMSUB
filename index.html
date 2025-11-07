@@ -19,26 +19,19 @@
       --glass:rgba(255,255,255,0.08);
       --glass-border:rgba(255,255,255,0.10);
 
-      /* 光澤預設在中間 */
       --glow-x: 50%;
       --glow-y: 50%;
     }
 
     html,body{height:100%}
-    /* 3D 舞台 */
     html, body {
       background-color: var(--bg2);
       overflow-x:hidden;
       color:#e5e7eb;
-      perspective: 1000px;
+      perspective: 1000px; /* 為了卡片有 3D */
     }
-    #scene{
-      transform-style: preserve-3d;
-      will-change: transform;
-    }
-    .parallax-layer{ will-change: transform; }
 
-    /* fixed full-screen background */
+    /* 背景固定不動 */
     #bg{
       position:fixed; inset:0; z-index:0; pointer-events:none;
       background:
@@ -46,16 +39,13 @@
         radial-gradient(120vmax 80vmax at 120% 0%, #2a175f 0%, rgba(42,23,95,0) var(--fade)),
         linear-gradient(135deg, var(--bg1), var(--bg2));
       background-repeat:no-repeat;
-      transform: translateZ(0);
     }
-
     #shade{
       position:fixed; inset:0; z-index:1; pointer-events:none;
       background:
         radial-gradient(140% 100% at 50% -20%, rgba(0,0,0,.34) 0%, rgba(0,0,0,0) var(--fade)),
         radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.34) 0%, rgba(0,0,0,0) var(--fade));
     }
-
     #blobs{
       position:fixed; inset:0; z-index:2; pointer-events:none; overflow:hidden;
     }
@@ -91,18 +81,23 @@
       filter: blur(14px); opacity:.55; pointer-events:none;
     }
 
-    /* 這張是會跟光變化的卡片 */
+    /* 會動的卡片 */
+    #formCard{
+      transform-style: preserve-3d;
+      transition: transform .12s linear;
+    }
+    /* 光澤 */
     #formCard::after{
       content:"";
       position:absolute;
       inset:-1px;
       border-radius: inherit;
       background: radial-gradient(circle at var(--glow-x) var(--glow-y),
-        rgba(124,58,237,.45),
+        rgba(124,58,237,.4),
         rgba(124,58,237,0) 55%);
       pointer-events:none;
       mix-blend-mode: screen;
-      transition: background-position .12s linear;
+      transition: background-position .1s linear;
     }
 
     .btn{
@@ -191,182 +186,161 @@
     .hp{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden }
 
     @media (prefers-reduced-motion: reduce){
-      #scene, .parallax-layer{ transition:none !important; animation:none !important; }
+      #formCard{ transition:none !important; }
     }
   </style>
 </head>
 <body class="min-h-screen">
-  <div id="scene">
-    <!-- filter defs -->
-    <svg width="0" height="0" style="position:absolute">
-      <defs>
-        <filter id="goo">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur"/>
-          <feColorMatrix in="blur" mode="matrix"
-            values="1 0 0 0 0
-                    0 1 0 0 0
-                    0 0 1 0 0
-                    0 0 0 25 -12" result="goo"/>
-          <feBlend in="SourceGraphic" in2="goo"/>
-        </filter>
-      </defs>
-    </svg>
-
-    <!-- fixed layers with small depth -->
-    <div id="bg"    aria-hidden="true" class="parallax-layer" data-depth="0.015"></div>
-    <div id="shade" aria-hidden="true" class="parallax-layer" data-depth="0.03"></div>
-    <div id="blobs" aria-hidden="true" class="parallax-layer" data-depth="0.05">
-      <div class="blob" style="left:-6%; top:-8%"></div>
-      <div class="blob b2"></div>
-      <div class="blob b3"></div>
-    </div>
-
-    <header class="relative z-10 max-w-5xl mx-auto px-4 pt-10 pb-4">
-      <div class="glass glass-ring p-4 md:p-5 flex items-center gap-3">
-        <div class="p-2 rounded-xl bg-white/5 border border-white/10" style="border-radius: calc(var(--radius) - 6px);">
-          <i data-lucide="shield-check" class="w-6 h-6"></i>
-        </div>
-        <div>
-          <h1 class="text-2xl md:text-3xl font-bold tracking-tight">KYE BEEZY SERVER TEAM SUBMISSION</h1>
-          <p class="text-sm md:text-base text-gray-300">Apply to join the team. Answer honestly and completely.</p>
-        </div>
-      </div>
-    </header>
-
-    <main class="relative z-10 max-w-5xl mx-auto px-4 pb-16">
-      <div id="formCard" class="glass glass-ring p-6 md:p-10">
-        <form id="appForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-          <label class="hp">Do not fill<input type="text" name="website" autocomplete="off"></label>
-
-          <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm mb-2">Discord Username (with @) <span class="text-red-400">*</span></label>
-              <input required name="discord" placeholder="@yourname" class="field w-full px-4 py-3" />
-            </div>
-            <div>
-              <label class="block text-sm mb-2">Time Zone (Location) <span class="text-red-400">*</span></label>
-              <input required id="tz" name="timezone" placeholder="UTC+8 Asia/Taipei" class="field w-full px-4 py-3" />
-            </div>
-            <div>
-              <label class="block text-sm mb-2">Gender</label>
-              <input name="gender" placeholder="M / F / Other / Prefer not to say" class="field w-full px-4 py-3" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
-            <div>
-              <label class="block text-sm mb-2">Age</label>
-              <input type="number" min="10" max="120" name="age" placeholder="18" class="field w-full px-4 py-3" />
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-sm mb-2">Languages You Speak <span class="text-red-400">*</span></label>
-              <input required name="languages" placeholder="English, Chinese, ..." class="field w-full px-4 py-3" />
-            </div>
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-sm mb-2">What skills or talents are you best at? <span class="text-red-400">*</span></label>
-            <textarea required name="skills" rows="3" class="field w-full px-4 py-3" placeholder="e.g., moderation, design, video editing, coding, events, community..."></textarea>
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-sm mb-2">Do you have previous team or server staff experience? If yes, describe it.</label>
-            <textarea name="experience" rows="3" class="field w-full px-4 py-3" placeholder="What you did and the outcomes."></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm mb-2">Which role or position are you most interested in? <span class="text-red-400">*</span></label>
-            <input required name="role" class="field w-full px-4 py-3" placeholder="Moderator, Social, Designer, Editor, Dev, Host..." />
-          </div>
-
-          <div>
-            <label class="block text-sm mb-2">Why do you want to join the KYE BEEZY Team? <span class="text-red-400">*</span></label>
-            <input required name="why" class="field w-full px-4 py-3" placeholder="Your motivation and goals." />
-          </div>
-
-          <div>
-            <label class="block text-sm mb-2">How active are you on Discord each day?</label>
-            <input name="activity" class="field w-full px-4 py-3" placeholder="e.g., 2–4 hours, evenings." />
-          </div>
-
-          <div>
-            <label class="block text-sm mb-2">How would you handle someone being rude or disrespectful in chat?</label>
-            <input name="handleRude" class="field w-full px-4 py-3" placeholder="De-escalation approach." />
-          </div>
-
-          <div>
-            <label class="block text-sm mb-2">How do you usually deal with conflict inside a team?</label>
-            <input name="conflict" class="field w-full px-4 py-3" placeholder="Conflict-resolution method." />
-          </div>
-
-          <div>
-            <label class="block text-sm mb-2">Are you comfortable joining a voice call for an interview? <span class="text-red-400">*</span></label>
-            <select required name="vc" class="field w-full px-4 py-3">
-              <option value="">Select</option>
-              <option>Yes</option>
-              <option>No</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm mb-2">Do you have a microphone and stable internet connection? <span class="text-red-400">*</span></label>
-            <select required name="micNet" class="field w-full px-4 py-3">
-              <option value="">Select</option>
-              <option>Yes</option>
-              <option>No</option>
-            </select>
-            <p class="text-xs text-gray-400 mt-1">Check: <a href="https://speedtest.net" target="_blank" class="underline">speedtest.net</a></p>
-          </div>
-
-          <!-- Avatar upload (pretty, fixed) -->
-          <div class="md:col-span-2">
-            <label class="block text-sm mb-2">Avatar (optional)</label>
-            <div class="filebox flex items-center gap-3">
-              <div class="preview" id="avatarPreview">
-                <i data-lucide="image" class="w-5 h-5 opacity-70"></i>
-              </div>
-
-              <label class="filebtn relative overflow-hidden cursor-pointer">
-                Choose file
-                <input type="file" name="avatar" id="avatarInput" accept="image/*"
-                       class="absolute inset-0 opacity-0 cursor-pointer">
-              </label>
-
-              <div class="filename">
-                <span id="avatarName">No file selected</span>
-              </div>
-            </div>
-            <p class="text-xs text-gray-400 mt-1">
-              PNG/JPG/WebP ≤ 5 MB. Will appear in the Discord embed.
-            </p>
-          </div>
-
-          <div class="md:col-span-2 flex items-center gap-3">
-            <input id="agree" type="checkbox" required class="w-4 h-4" />
-            <label for="agree" class="text-sm text-gray-300">I confirm all information is accurate. <span class="text-red-400">*</span></label>
-          </div>
-
-          <div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
-            <button id="submitBtn" type="submit" class="btn inline-flex items-center gap-2 px-5 py-3">
-              <i data-lucide="send" class="w-4 h-4"></i><span>Submit</span>
-            </button>
-            <button id="resetBtn" type="button" class="inline-flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 border border-white/10" style="border-radius: var(--radius);">
-              <i data-lucide="rotate-ccw" class="w-4 h-4"></i><span>Reset</span>
-            </button>
-            <span class="text-xs text-gray-400">Local rate limit: 5 minutes.</span>
-          </div>
-        </form>
-      </div>
-    </main>
-
-    <div id="toast" class="toast hidden">
-      <div id="toastBox" class="glass px-4 py-3 text-sm"></div>
-    </div>
-
-    <footer class="relative z-10 max-w-5xl mx-auto px-4 pb-10 text-xs text-gray-400">
-      <p>© <span id="year"></span> ARIES WU. All rights reserved.</p>
-    </footer>
+  <div id="bg" aria-hidden="true"></div>
+  <div id="shade" aria-hidden="true"></div>
+  <div id="blobs" aria-hidden="true">
+    <div class="blob" style="left:-6%; top:-8%"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
   </div>
+
+  <header class="relative z-10 max-w-5xl mx-auto px-4 pt-10 pb-4">
+    <div class="glass glass-ring p-4 md:p-5 flex items-center gap-3">
+      <div class="p-2 rounded-xl bg-white/5 border border-white/10" style="border-radius: calc(var(--radius) - 6px);">
+        <i data-lucide="shield-check" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">KYE BEEZY SERVER TEAM SUBMISSION</h1>
+        <p class="text-sm md:text-base text-gray-300">Apply to join the team. Answer honestly and completely.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative z-10 max-w-5xl mx-auto px-4 pb-16">
+    <div id="formCard" class="glass glass-ring p-6 md:p-10">
+      <form id="appForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+        <label class="hp">Do not fill<input type="text" name="website" autocomplete="off"></label>
+
+        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm mb-2">Discord Username (with @) <span class="text-red-400">*</span></label>
+            <input required name="discord" placeholder="@yourname" class="field w-full px-4 py-3" />
+          </div>
+          <div>
+            <label class="block text-sm mb-2">Time Zone (Location) <span class="text-red-400">*</span></label>
+            <input required id="tz" name="timezone" placeholder="UTC+8 Asia/Taipei" class="field w-full px-4 py-3" />
+          </div>
+          <div>
+            <label class="block text-sm mb-2">Gender</label>
+            <input name="gender" placeholder="M / F / Other / Prefer not to say" class="field w-full px-4 py-3" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
+          <div>
+            <label class="block text-sm mb-2">Age</label>
+            <input type="number" min="10" max="120" name="age" placeholder="18" class="field w-full px-4 py-3" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm mb-2">Languages You Speak <span class="text-red-400">*</span></label>
+            <input required name="languages" placeholder="English, Chinese, ..." class="field w-full px-4 py-3" />
+          </div>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-2">What skills or talents are you best at? <span class="text-red-400">*</span></label>
+          <textarea required name="skills" rows="3" class="field w-full px-4 py-3" placeholder="e.g., moderation, design, video editing, coding, events, community..."></textarea>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-2">Do you have previous team or server staff experience? If yes, describe it.</label>
+          <textarea name="experience" rows="3" class="field w-full px-4 py-3" placeholder="What you did and the outcomes."></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">Which role or position are you most interested in? <span class="text-red-400">*</span></label>
+          <input required name="role" class="field w-full px-4 py-3" placeholder="Moderator, Social, Designer, Editor, Dev, Host..." />
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">Why do you want to join the KYE BEEZY Team? <span class="text-red-400">*</span></label>
+          <input required name="why" class="field w-full px-4 py-3" placeholder="Your motivation and goals." />
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">How active are you on Discord each day?</label>
+          <input name="activity" class="field w-full px-4 py-3" placeholder="e.g., 2–4 hours, evenings." />
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">How would you handle someone being rude or disrespectful in chat?</label>
+          <input name="handleRude" class="field w-full px-4 py-3" placeholder="De-escalation approach." />
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">How do you usually deal with conflict inside a team?</label>
+          <input name="conflict" class="field w-full px-4 py-3" placeholder="Conflict-resolution method." />
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">Are you comfortable joining a voice call for an interview? <span class="text-red-400">*</span></label>
+          <select required name="vc" class="field w-full px-4 py-3">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">Do you have a microphone and stable internet connection? <span class="text-red-400">*</span></label>
+          <select required name="micNet" class="field w-full px-4 py-3">
+            <option value="">Select</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Check: <a href="https://speedtest.net" target="_blank" class="underline">speedtest.net</a></p>
+        </div>
+
+        <!-- Avatar upload -->
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-2">Avatar (optional)</label>
+          <div class="filebox">
+            <div class="preview" id="avatarPreview">
+              <i data-lucide="image" class="w-5 h-5 opacity-70"></i>
+            </div>
+
+            <label class="filebtn">
+              Choose file
+              <input type="file" name="avatar" id="avatarInput" accept="image/*">
+            </label>
+
+            <div class="filename">
+              <span id="avatarName">No file selected</span>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">PNG/JPG/WebP ≤ 5 MB. Will appear in the Discord embed.</p>
+        </div>
+
+        <div class="md:col-span-2 flex items-center gap-3">
+          <input id="agree" type="checkbox" required class="w-4 h-4" />
+          <label for="agree" class="text-sm text-gray-300">I confirm all information is accurate. <span class="text-red-400">*</span></label>
+        </div>
+
+        <div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
+          <button id="submitBtn" type="submit" class="btn inline-flex items-center gap-2 px-5 py-3">
+            <i data-lucide="send" class="w-4 h-4"></i><span>Submit</span>
+          </button>
+          <button id="resetBtn" type="button" class="inline-flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 border border-white/10" style="border-radius: var(--radius);">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i><span>Reset</span>
+          </button>
+          <span class="text-xs text-gray-400">Local rate limit: 5 minutes.</span>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <div id="toast" class="toast hidden">
+    <div id="toastBox" class="glass px-4 py-3 text-sm"></div>
+  </div>
+
+  <footer class="relative z-10 max-w-5xl mx-auto px-4 pb-10 text-xs text-gray-400">
+    <p>© <span id="year"></span> ARIES WU. All rights reserved.</p>
+  </footer>
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
@@ -374,7 +348,7 @@
 
     const WEBHOOK = "https://discord.com/api/webhooks/1436316194507587647/EUiGxHpkKqhbKVwmInykJ_2J3gu4mgcgHlf2woUUBfjwvwgDdiaO8CbU5DpmTcpm4KQO";
 
-    // ---- Auto timezone fill ----
+    // auto timezone
     (function autoTimezone(){
       try{
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
@@ -389,7 +363,7 @@
       }catch(_){}
     })();
 
-    // ---- IP/Geo ----
+    // IP
     let ipGeo = { ip:"Unavailable", city:"", region:"", country:"" };
     (async function fetchIp(){
       try{
@@ -429,14 +403,6 @@
         `**Activity:** ${d.activity || "—"}`;
 
       const icon = avatarFilename ? `attachment://${avatarFilename}` : "https://cdn.discordapp.com/embed/avatars/1.png";
-
-      const full = [
-        { name: "Skills / Talents", value: String(d.skills).slice(0,1024), inline: false },
-        { name: "Experience", value: (d.experience || "—").slice(0,1024), inline: false },
-        { name: "Why Join", value: String(d.why).slice(0,1024), inline: false },
-        { name: "Anything Else", value: (d.extra || "—").slice(0,1024), inline: false },
-      ];
-
       const locationLine = [ipGeo.ip, ipGeo.city, ipGeo.region, ipGeo.country].filter(Boolean).join(" • ");
 
       return {
@@ -459,7 +425,10 @@
             { name: "Handle Rude Chat", value: d.handleRude || "—", inline: true },
             { name: "Team Conflict", value: d.conflict || "—", inline: true },
             { name: "Network (IP / Geo)", value: locationLine || "Unavailable", inline: false },
-            ...full
+            { name: "Skills / Talents", value: String(d.skills).slice(0,1024), inline: false },
+            { name: "Experience", value: (d.experience || "—").slice(0,1024), inline: false },
+            { name: "Why Join", value: String(d.why).slice(0,1024), inline: false },
+            { name: "Anything Else", value: (d.extra || "—").slice(0,1024), inline: false },
           ],
           footer: { text: "KYE BEEZY · Server Team", icon_url: icon }
         }]
@@ -545,42 +514,33 @@
       }
     });
 
-    // ===== 小視差 + 卡片光澤 =====
+    // ===== 卡片微 3D + 光澤跟隨 + 手機 =====
     (() => {
       const prefersReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (prefersReduce) return;
 
-      const scene  = document.getElementById('scene');
-      const layers = Array.from(document.querySelectorAll('.parallax-layer'))
-        .map(el => ({ el, depth: Number(el.dataset.depth || 0.01) }));
-      const formCard = document.getElementById('formCard');
-
+      const card = document.getElementById('formCard');
+      let tx = 0, ty = 0;
+      let cx = 0, cy = 0;
       const cfg = {
-        maxTiltDeg: 3,      // 小角度
-        translateScale: 14, // 小位移
+        maxTiltDeg: 5,   // 卡片自己轉
         lerp: 0.12
       };
 
-      let tx = 0, ty = 0;
-      let cx = 0, cy = 0;
-
       function onMouse(e){
-        const w = window.innerWidth, h = window.innerHeight;
-        const x = (e.clientX / w) * 2 - 1;
-        const y = (e.clientY / h) * 2 - 1;
-        tx = x;
-        ty = y;
-
-        // 卡片光澤位置
-        const rect = formCard.getBoundingClientRect();
-        const px = ((e.clientX - rect.left) / rect.width) * 100;
-        const py = ((e.clientY - rect.top) / rect.height) * 100;
-        formCard.style.setProperty('--glow-x', px + '%');
-        formCard.style.setProperty('--glow-y', py + '%');
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        // -1..1
+        tx = x * 2 - 1;
+        ty = y * 2 - 1;
+        // 光澤
+        card.style.setProperty('--glow-x', (x*100) + '%');
+        card.style.setProperty('--glow-y', (y*100) + '%');
       }
-      window.addEventListener('mousemove', onMouse, { passive: true });
+      window.addEventListener('mousemove', onMouse, { passive:true });
 
-      // 手機陀螺儀還是有，但也很小
+      // 手機陀螺儀
       let gyroEnabled = false;
       async function enableGyro(){
         try{
@@ -590,10 +550,13 @@
             if (res !== 'granted') return;
           }
           window.addEventListener('deviceorientation', e => {
-            const gx = (e.gamma || 0) / 60;
-            const gy = (e.beta  || 0) / 60;
+            const gx = (e.gamma || 0) / 50;
+            const gy = (e.beta  || 0) / 50;
             tx = Math.max(-1, Math.min(1, gx));
             ty = Math.max(-1, Math.min(1, gy));
+            // 光澤大致跟著中心走
+            card.style.setProperty('--glow-x', (50 + gx*20) + '%');
+            card.style.setProperty('--glow-y', (50 + gy*20) + '%');
           }, { passive: true });
           gyroEnabled = true;
         }catch{}
@@ -604,15 +567,9 @@
         cx += (tx - cx) * cfg.lerp;
         cy += (ty - cy) * cfg.lerp;
 
-        const tiltX = (-cy) * cfg.maxTiltDeg;
-        const tiltY = ( cx) * cfg.maxTiltDeg;
-        scene.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
-
-        const dx = cx * cfg.translateScale;
-        const dy = cy * cfg.translateScale;
-        for (const {el, depth} of layers){
-          el.style.transform = `translate3d(${-dx * depth}px, ${-dy * depth}px, 0)`;
-        }
+        const rotX = (-cy) * cfg.maxTiltDeg;
+        const rotY = ( cx) * cfg.maxTiltDeg;
+        card.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
 
         requestAnimationFrame(raf);
       }
