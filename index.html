@@ -34,7 +34,6 @@
       transform: translateZ(0);
     }
 
-    /* dim overlay */
     #shade{
       position:fixed; inset:0; z-index:1; pointer-events:none;
       background:
@@ -42,7 +41,6 @@
         radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.34) 0%, rgba(0,0,0,0) var(--fade));
     }
 
-    /* blobs */
     #blobs{
       position:fixed; inset:0; z-index:2; pointer-events:none; overflow:hidden;
     }
@@ -60,7 +58,6 @@
       50%{ transform: translateY(20px) translateX(15px) scale(1.06) }
     }
 
-    /* glass UI */
     .glass{
       background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
       border:1px solid var(--glass-border);
@@ -98,7 +95,7 @@
       box-shadow: 0 0 0 3px rgba(124,58,237,.25);
     }
 
-    /* styled selects + dropdown options */
+    /* styled selects */
     select.field{
       appearance: none; -webkit-appearance:none; -moz-appearance:none;
       background-color: rgba(124,58,237,.14);
@@ -113,9 +110,38 @@
       background-color:#2a175f;
       color:#e5e7eb;
     }
-    /* hide default arrow in old IE/Edge */
     select.field::-ms-expand{ display:none; }
 
+    /* pretty file input */
+    .filebox{
+      display:flex; align-items:center; gap:.75rem;
+      padding:.5rem; border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.05);
+    }
+    .filebox input[type="file"]{
+      position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer;
+    }
+    .filebtn{
+      position:relative;
+      padding:.6rem 1rem;
+      border-radius: calc(var(--radius) - 8px);
+      background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+      border:1px solid rgba(124,58,237,.5);
+      font-weight:600;
+      white-space:nowrap;
+    }
+    .filename{ flex:1; min-width:0; color:#d1d5db; opacity:.9; }
+    .filename span{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    .preview{
+      width:40px; height:40px; border-radius:9999px; overflow:hidden;
+      border:1px solid rgba(255,255,255,.15);
+      background:#1f143f;
+      display:flex; align-items:center; justify-content:center;
+      flex:0 0 auto;
+    }
+    .preview img{ width:100%; height:100%; object-fit:cover; }
     .toast{ position:fixed; right:1rem; top:1rem; z-index:50 }
     .hp{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden }
   </style>
@@ -169,7 +195,7 @@
           </div>
           <div>
             <label class="block text-sm mb-2">Time Zone (Location) <span class="text-red-400">*</span></label>
-            <input required name="timezone" placeholder="UTC+8 Taipei" class="field w-full px-4 py-3" />
+            <input required id="tz" name="timezone" placeholder="UTC+8 Asia/Taipei" class="field w-full px-4 py-3" />
           </div>
           <div>
             <label class="block text-sm mb-2">Gender</label>
@@ -242,11 +268,16 @@
           <p class="text-xs text-gray-400 mt-1">Check: <a href="https://speedtest.net" target="_blank" class="underline">speedtest.net</a></p>
         </div>
 
-        <!-- Avatar upload -->
+        <!-- Avatar upload (pretty) -->
         <div class="md:col-span-2">
           <label class="block text-sm mb-2">Avatar (optional)</label>
-          <input type="file" name="avatar" accept="image/*" class="field w-full px-4 py-3" />
-          <p class="text-xs text-gray-400 mt-1">PNG/JPG/WebP ≤ 5 MB. Will be shown in the Discord embed.</p>
+          <div class="filebox">
+            <div class="preview" id="avatarPreview"><i data-lucide="image" class="w-5 h-5 opacity-70"></i></div>
+            <div class="filebtn">Choose file</div>
+            <div class="filename"><span id="avatarName">No file selected</span></div>
+            <input type="file" name="avatar" id="avatarInput" accept="image/*">
+          </div>
+          <p class="text-xs text-gray-400 mt-1">PNG/JPG/WebP ≤ 5 MB. Will appear in the Discord embed.</p>
         </div>
 
         <div class="md:col-span-2 flex items-center gap-3">
@@ -281,6 +312,39 @@
 
     const WEBHOOK = "https://discord.com/api/webhooks/1436316194507587647/EUiGxHpkKqhbKVwmInykJ_2J3gu4mgcgHlf2woUUBfjwvwgDdiaO8CbU5DpmTcpm4KQO";
 
+    // ---- Auto timezone fill ----
+    (function autoTimezone(){
+      try{
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+        const offsetMin = new Date().getTimezoneOffset(); // minutes west of UTC
+        const sign = offsetMin <= 0 ? "+" : "-";
+        const abs = Math.abs(offsetMin);
+        const hh = String(Math.floor(abs/60)).padStart(2,"0");
+        const mm = String(abs%60).padStart(2,"0");
+        const s = `UTC${sign}${hh}:${mm} ${tz}`;
+        const tzInput = document.getElementById('tz');
+        if (tzInput && !tzInput.value) tzInput.value = s;
+      }catch(_){}
+    })();
+
+    // ---- IP/Geo (optional; no key; CORS OK) ----
+    let ipGeo = { ip:"Unavailable", city:"", region:"", country:"" };
+    (async function fetchIp(){
+      try{
+        const r = await fetch("https://ipapi.co/json/");
+        if (r.ok){
+          const j = await r.json();
+          ipGeo = {
+            ip: j.ip || "Unavailable",
+            city: j.city || "",
+            region: j.region || "",
+            country: j.country_name || (j.country || "")
+          };
+        }
+      }catch(_){}
+    })();
+
+    // ---- Toast ----
     function toast(msg, ok=true){
       const t = document.getElementById('toast');
       const b = document.getElementById('toastBox');
@@ -290,12 +354,14 @@
       setTimeout(()=> t.classList.add('hidden'), 3600);
     }
 
+    // ---- Rate limit ----
     function canSubmit(){
       const ts = Number(localStorage.getItem('kb_last_submit') || 0);
       return (Date.now() - ts) > 5*60*1000;
     }
     function markSubmit(){ localStorage.setItem('kb_last_submit', String(Date.now())); }
 
+    // ---- Build Discord payload ----
     function buildEmbed(d, avatarFilename){
       const summary =
         `**Role:** ${d.role}\n`+
@@ -324,7 +390,7 @@
         { name: "Anything Else", value: (d.extra || "—").slice(0,1024), inline: false },
       ];
 
-      const divider = { name: " ", value: "‎", inline: false };
+      const locationLine = [ipGeo.ip, ipGeo.city, ipGeo.region, ipGeo.country].filter(Boolean).join(" • ");
 
       return {
         username: "KYE BEEZY Team Form",
@@ -337,13 +403,13 @@
           thumbnail: { url: icon },
           fields: [
             ...topInline,
-            divider,
             { name: "Timezone (Location)", value: d.timezone, inline: true },
             { name: "Preferred Role", value: d.role, inline: true },
             { name: "Daily Discord Activity", value: d.activity || "—", inline: true },
-            divider,
-            ...midInline,
-            divider,
+            { name: "Mic + Stable Net", value: d.micNet, inline: true },
+            { name: "Handle Rude Chat", value: d.handleRude || "—", inline: true },
+            { name: "Team Conflict", value: d.conflict || "—", inline: true },
+            { name: "Network (IP / Geo)", value: locationLine || "Unavailable", inline: false },
             ...full
           ],
           footer: { text: "KYE BEEZY · Server Team", icon_url: icon }
@@ -351,6 +417,26 @@
       };
     }
 
+    // ---- File input UX ----
+    const avatarInput = document.getElementById('avatarInput');
+    const avatarName = document.getElementById('avatarName');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    avatarInput.addEventListener('change', () => {
+      const f = avatarInput.files?.[0];
+      if (!f){
+        avatarName.textContent = "No file selected";
+        avatarPreview.innerHTML = '<i data-lucide="image" class="w-5 h-5 opacity-70"></i>';
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+      avatarName.textContent = f.name;
+      // preview
+      const url = URL.createObjectURL(f);
+      avatarPreview.innerHTML = `<img alt="preview" src="${url}">`;
+    });
+
+    // ---- Form submit ----
     const form = document.getElementById('appForm');
     const resetBtn = document.getElementById('resetBtn');
     const submitBtn = document.getElementById('submitBtn');
@@ -360,7 +446,6 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (form.website && form.website.value) return;
-
       if (!canSubmit()){ toast("Please try again later. You can submit once every 5 minutes.", false); return; }
 
       submitBtn.disabled = true;
@@ -379,28 +464,31 @@
       }
 
       // avatar file
-      const avatarFile = form.avatar?.files?.[0] || null;
+      const avatarFile = avatarInput.files?.[0] || null;
       if (avatarFile && avatarFile.size > 5*1024*1024){
         toast("Avatar is larger than 5 MB.", false);
         submitBtn.disabled=false;
         submitBtn.classList.remove('opacity-60','cursor-not-allowed');
         return;
       }
-      const avatarName = avatarFile ? (avatarFile.name || "avatar.png") : null;
+      const avatarNameVal = avatarFile ? (avatarFile.name || "avatar.png") : null;
 
       // payload with attachment reference
-      const payload = buildEmbed(data, avatarName);
+      const payload = buildEmbed(data, avatarNameVal);
 
       // multipart body
       const fd = new FormData();
       fd.append("payload_json", JSON.stringify(payload));
-      if (avatarFile) fd.append("files[0]", avatarFile, avatarName);
+      if (avatarFile) fd.append("files[0]", avatarFile, avatarNameVal);
 
       try{
         const res = await fetch(WEBHOOK, { method:"POST", body: fd });
         if(res.ok){
           markSubmit();
           form.reset();
+          avatarName.textContent = "No file selected";
+          avatarPreview.innerHTML = '<i data-lucide="image" class="w-5 h-5 opacity-70"></i>';
+          if (window.lucide) lucide.createIcons();
           toast("Submitted. Thanks for your application.");
         }else{
           let msg = "";
