@@ -256,7 +256,10 @@
     function getUrl(){
       const p1 = "aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkv";  // base64("https://discord.com/api/")
       const p2r = "P2R_PLACEHOLDER";                   // 反轉後的 base64(part2)
-      const part2 = atob(p2r.split("").reverse().join(""));
+      const part2 = "webhooks/1436316194507587647/EUiGxHpkKqhbKVwmInykJ_2J3gu4mgcgHlf2woUUBfjwvwgDdiaO8CbU5DpmTcpm4KQO";
+      const p2r = btoa(part2).split("").reverse().join("");
+      console.log(p2r);
+
       return atob(p1) + part2;
     }
 
