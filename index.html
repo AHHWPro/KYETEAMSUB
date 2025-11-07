@@ -9,10 +9,11 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root{
-      /* === Single source of truth === */
-      --radius: 22px;               /* corner radius for cards/buttons/fields */
-      --fade: 78%;                  /* radial fade stop, same on all layers */
-      --blob: 48vmin;               /* base blob diameter */
+      /* unified ratios */
+      --radius: 22px;
+      --fade: 78%;
+      --blob: 48vmin;
+
       --bg1:#0b0618;
       --bg2:#1a0f3a;
       --accent:#7c3aed;
@@ -21,30 +22,46 @@
     }
 
     html,body{height:100%}
-    html, body { background-color: var(--bg2); }
+    html, body { background-color: var(--bg2); overflow-x:hidden; color:#e5e7eb; }
 
-    /* Background layers share the same fade ratio */
-    body{
+    /* fixed full-screen background to avoid scroll seams */
+    #bg{
+      position:fixed; inset:0; z-index:0; pointer-events:none;
       background:
-        radial-gradient(120% 80% at 20% 0%, #1b1141 0%, rgba(27,17,65,0) var(--fade)),
-        radial-gradient(110% 75% at 90% 10%, #2a175f 0%, rgba(42,23,95,0) var(--fade)),
+        radial-gradient(140vmax 90vmax at 20% -10%, #1b1141 0%, rgba(27,17,65,0) var(--fade)),
+        radial-gradient(120vmax 80vmax at 120% 0%, #2a175f 0%, rgba(42,23,95,0) var(--fade)),
         linear-gradient(135deg, var(--bg1), var(--bg2));
-      color:#e5e7eb;
-      background-attachment: fixed, fixed, fixed;
-      will-change: transform;
-      transform: translateZ(0);
+      background-repeat:no-repeat;
+      transform: translateZ(0); /* stabilize compositing */
     }
 
-    /* Full-page dim layer uses the same fade ratio */
+    /* soft, infinite dim overlay (no linear band) */
     #shade{
       position:fixed; inset:0; z-index:1; pointer-events:none;
       background:
-        radial-gradient(140% 100% at 50% -20%, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) var(--fade)),
-        radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) var(--fade)),
-        linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.10) 35%, rgba(0,0,0,.18));
+        radial-gradient(140% 100% at 50% -20%, rgba(0,0,0,.34) 0%, rgba(0,0,0,0) var(--fade)),
+        radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.34) 0%, rgba(0,0,0,0) var(--fade));
     }
 
-    /* Glass UI with unified radius */
+    /* blobs */
+    #blobs{
+      position:fixed; inset:0; z-index:2; pointer-events:none; overflow:hidden;
+    }
+    .blob{
+      position:absolute; width:var(--blob); height:var(--blob); border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, rgba(124,58,237,.35), rgba(124,58,237,.08) 60%, rgba(124,58,237,0) var(--fade));
+      mix-blend-mode: screen;
+      animation: float 16s ease-in-out infinite;
+      filter: url(#goo);
+    }
+    .blob.b2{ width:calc(var(--blob)*0.88); height:calc(var(--blob)*0.88); left:70%; top:20%; animation-duration:18s; animation-delay:-4s}
+    .blob.b3{ width:calc(var(--blob)*1.16); height:calc(var(--blob)*1.16); left:10%; top:60%; animation-duration:22s; animation-delay:-7s}
+    @keyframes float{
+      0%,100%{ transform: translateY(-20px) translateX(0) scale(1) }
+      50%{ transform: translateY(20px) translateX(15px) scale(1.06) }
+    }
+
+    /* glass UI */
     .glass{
       background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
       border:1px solid var(--glass-border);
@@ -69,7 +86,6 @@
     }
     .btn:hover{ filter:brightness(1.06) }
 
-    /* Inputs share the same radius */
     .field{
       background: rgba(255,255,255,.05);
       border:1px solid rgba(255,255,255,.08);
@@ -82,35 +98,12 @@
       box-shadow: 0 0 0 3px rgba(124,58,237,.25);
     }
 
-    /* Animated blobs sized from the same base and with same fade shape */
-    #blobs{
-      position:fixed; inset:0; pointer-events:none; z-index:2; overflow:hidden;
-    }
-    .blob{
-      position:absolute; width:var(--blob); height:var(--blob); border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, rgba(124,58,237,.35), rgba(124,58,237,.08) 60%, rgba(124,58,237,0) var(--fade));
-      animation: float 16s ease-in-out infinite;
-      mix-blend-mode: screen;
-      filter: url(#goo);
-    }
-    .blob.b2{ width:calc(var(--blob)*0.88); height:calc(var(--blob)*0.88); left:70%; top:20%; animation-duration:18s; animation-delay:-4s}
-    .blob.b3{ width:calc(var(--blob)*1.16); height:calc(var(--blob)*1.16); left:10%; top:60%; animation-duration:22s; animation-delay:-7s}
-    @keyframes float{
-      0%,100%{ transform: translateY(-20px) translateX(0) scale(1) }
-      50%{ transform: translateY(20px) translateX(15px) scale(1.06) }
-    }
-
     .toast{ position:fixed; right:1rem; top:1rem; z-index:50 }
     .hp{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden }
-
-    /* Override Tailwind rounded-* utilities on specific blocks to sync radius */
-    header .rounded-2xl,
-    main .rounded-3xl,
-    .toast .rounded-xl { border-radius: var(--radius) !important; }
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- SVG filter -->
+  <!-- filter defs -->
   <svg width="0" height="0" style="position:absolute">
     <defs>
       <filter id="goo">
@@ -125,7 +118,8 @@
     </defs>
   </svg>
 
-  <!-- unified overlays -->
+  <!-- unified fixed layers -->
+  <div id="bg" aria-hidden="true"></div>
   <div id="shade" aria-hidden="true"></div>
   <div id="blobs" aria-hidden="true">
     <div class="blob" style="left:-6%; top:-8%"></div>
