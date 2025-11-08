@@ -22,6 +22,10 @@
 
       --glow-x: 50%;
       --glow-y: 50%;
+
+      /* 滑鼠互動參數 0~100 */
+      --mx: 50;
+      --my: 50;
     }
 
     html,body{height:100%}
@@ -30,57 +34,97 @@
       overflow-x:hidden;
       color:#e5e7eb;
       perspective: 1000px;
+      overscroll-behavior: none;
     }
 
-    /* 開場動畫關鍵 */
-    body.loaded #bg {
-      animation: bgBrighten 1.1s ease-out forwards;
-    }
+    /* 進場：用 opacity 取代 filter(brightness) 避免 fixed+filter 邊緣斷層 */
+    body:not(.loaded) #bg { opacity:.35 }
+    body.loaded #bg { animation: bgIn 1.1s ease-out forwards }
+    @keyframes bgIn { from{opacity:.35} to{opacity:1} }
+
     body.loaded #topCard,
-    body.loaded #formCard {
-      animation: cardIn 0.6s ease-out 0.25s forwards;
-    }
+    body.loaded #formCard { animation: cardIn 0.6s ease-out 0.25s forwards }
+    @keyframes cardIn { 0%{opacity:0; transform: translateY(12px) scale(.995)} 100%{opacity:1; transform: translateY(0) scale(1)} }
 
-    @keyframes bgBrighten {
-      0% { filter: brightness(.35); }
-      100% { filter: brightness(1); }
+    /* === 背景固定容器：Overscan 防露邊 === */
+    #bgfx{
+      position:fixed;
+      inset:-12vmax;         /* 四周超出版面，滾動與回彈不露邊 */
+      z-index:0;
+      pointer-events:none;
+      transform: translateZ(0);
+      will-change: transform;
+      contain: paint;
     }
-    @keyframes cardIn {
-      0% { opacity:0; transform: translateY(12px) scale(.995); }
-      100% { opacity:1; transform: translateY(0) scale(1); }
-    }
+    #bg,#shade,#blobs,#morph{ position:absolute; inset:0 }
 
-    /* 背景固定 */
+    /* 主背景 */
     #bg{
-      position:fixed; inset:0; z-index:0; pointer-events:none;
       background:
         radial-gradient(140vmax 90vmax at 20% -10%, #1b1141 0%, rgba(27,17,65,0) var(--fade)),
         radial-gradient(120vmax 80vmax at 120% 0%, #2a175f 0%, rgba(42,23,95,0) var(--fade)),
         linear-gradient(135deg, var(--bg1), var(--bg2));
       background-repeat:no-repeat;
-      filter: brightness(.35); /* 初始暗 */
+      backface-visibility:hidden;
+      transform: translateZ(0);
     }
+
+    /* 陰影層 */
     #shade{
-      position:fixed; inset:0; z-index:1; pointer-events:none;
       background:
         radial-gradient(140% 100% at 50% -20%, rgba(0,0,0,.34) 0%, rgba(0,0,0,0) var(--fade)),
         radial-gradient(120% 100% at 50% 120%, rgba(0,0,0,.34) 0%, rgba(0,0,0,0) var(--fade));
+      mix-blend-mode: multiply;
     }
-    #blobs{
-      position:fixed; inset:0; z-index:2; pointer-events:none; overflow:hidden;
-    }
+
+    /* 圓球層 */
+    #blobs{ overflow:hidden; filter: url(#goo) }
     .blob{
       position:absolute; width:var(--blob); height:var(--blob); border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, rgba(124,58,237,.35), rgba(124,58,237,.08) 60%, rgba(124,58,237,0) var(--fade));
+      background: radial-gradient(circle at 30% 30%, rgba(124,58,237,.32), rgba(124,58,237,.08) 60%, rgba(124,58,237,0) var(--fade));
       mix-blend-mode: screen;
       animation: float 16s ease-in-out infinite;
-      filter: url(#goo);
+      transform: translateZ(0);
+      will-change: transform;
     }
     .blob.b2{ width:calc(var(--blob)*0.88); height:calc(var(--blob)*0.88); left:70%; top:20%; animation-duration:18s; animation-delay:-4s}
     .blob.b3{ width:calc(var(--blob)*1.16); height:calc(var(--blob)*1.16); left:10%; top:60%; animation-duration:22s; animation-delay:-7s}
     @keyframes float{
-      0%,100%{ transform: translateY(-20px) translateX(0) scale(1) }
-      50%{ transform: translateY(20px) translateX(15px) scale(1.06) }
+      0%,100%{ transform: translate3d(0,-20px,0) }
+      50%{ transform: translate3d(15px,20px,0) }
+    }
+
+    /* === Morphing Gradients 可形變漸層，與指標互動 === */
+    #morph{
+      mix-blend-mode: screen;
+      filter: blur(36px) saturate(130%);
+      opacity:.9;
+      pointer-events:none;
+    }
+    #morph .m{
+      position:absolute;
+      width:70vmax;
+      aspect-ratio:1/1;
+      background:
+        radial-gradient(35% 35% at 30% 30%, rgba(124,58,237,.55), rgba(124,58,237,0) 70%),
+        conic-gradient(from 0turn at 50% 50%, rgba(124,58,237,.35), rgba(180,120,255,.25), rgba(124,58,237,.35));
+      border-radius: 40% 60% 55% 45% / 45% 40% 60% 55%;
+      animation: hue 40s linear infinite, morph 18s ease-in-out infinite alternate;
+      will-change: transform, border-radius, filter;
+      transform:
+        translate3d(calc((var(--mx) - 50) * 0.8px), calc((var(--my) - 50) * 0.8px), 0);
+    }
+    #morph .m1{ left:-10vmax; top:-8vmax }
+    #morph .m2{
+      right:-8vmax; bottom:-6vmax;
+      animation-duration: 36s, 26s; /* hue, morph */
+      filter: hue-rotate(30deg);
+    }
+    @keyframes hue { to { filter: hue-rotate(360deg) } }
+    @keyframes morph{
+      0%{   border-radius: 40% 60% 55% 45% / 45% 40% 60% 55% }
+      50%{  border-radius: 60% 40% 40% 60% / 55% 60% 40% 45% }
+      100%{ border-radius: 35% 65% 60% 40% / 40% 50% 50% 60% }
     }
 
     .glass{
@@ -89,9 +133,7 @@
       border-radius: var(--radius);
       backdrop-filter: blur(16px) saturate(120%);
       -webkit-backdrop-filter: blur(16px) saturate(120%);
-      box-shadow:
-        0 10px 30px rgba(0,0,0,.35),
-        inset 0 1px 0 rgba(255,255,255,.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
       position: relative;
     }
     .glass-ring{ position:relative; overflow:hidden; border-radius: var(--radius); }
@@ -101,14 +143,11 @@
       filter: blur(14px); opacity:.55; pointer-events:none;
     }
 
-    /* 動的兩塊 */
-    #topCard,
-    #formCard{
+    #formCard,
+    #topCard{
       transform-style: preserve-3d;
-      opacity: 0; /* 開場時先隱藏，待動畫補上 */
+      opacity: 0;
     }
-
-    /* 邊緣光弱化版 */
     #formCard::after{
       content:"";
       position:absolute;
@@ -158,12 +197,7 @@
     }
     select.field::-ms-expand{ display:none; }
 
-    .filebox {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      position: relative;
-    }
+    .filebox { display: flex; align-items: center; gap: 0.75rem; position: relative; }
     .preview{
       width:40px; height:40px; border-radius:9999px; overflow:hidden;
       border:1px solid rgba(255,255,255,.15);
@@ -188,26 +222,16 @@
     }
     .filebtn:hover { filter: brightness(1.08); }
     .filebtn input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
     }
-    .filename {
-      font-size: 0.875rem;
-      color: #cbd5e1;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      max-width: 180px;
-    }
+    .filename { font-size: 0.875rem; color: #cbd5e1; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 180px; }
 
     .toast{ position:fixed; right:1rem; top:1rem; z-index:50 }
     .hp{ position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden }
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- 背景 -->
+  <!-- 背景層：固定容器，避免滾動露邊 -->
   <svg width="0" height="0" style="position:absolute">
     <defs>
       <filter id="goo">
@@ -221,15 +245,26 @@
       </filter>
     </defs>
   </svg>
-  <div id="bg" aria-hidden="true"></div>
-  <div id="shade" aria-hidden="true"></div>
-  <div id="blobs" aria-hidden="true">
-    <div class="blob" style="left:-6%; top:-8%"></div>
-    <div class="blob b2"></div>
-    <div class="blob b3"></div>
+
+  <div id="bgfx" aria-hidden="true">
+    <div id="bg"></div>
+
+    <!-- 可形變的漸層 -->
+    <div id="morph">
+      <span class="m m1"></span>
+      <span class="m m2"></span>
+    </div>
+
+    <div id="shade"></div>
+
+    <div id="blobs">
+      <div class="blob" style="left:-6%; top:-8%"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+    </div>
   </div>
 
-  <!-- header 也要動 -->
+  <!-- 內容 -->
   <header class="relative z-10 max-w-5xl mx-auto px-4 pt-10 pb-4">
     <div id="topCard" class="glass glass-ring p-4 md:p-5 flex items-center gap-3">
       <div class="p-2 rounded-xl bg-white/5 border border-white/10" style="border-radius: calc(var(--radius) - 6px);">
@@ -347,8 +382,6 @@
           <p class="text-xs text-gray-400 mt-1">PNG/JPG/WebP ≤ 5 MB. Will appear in the Discord embed.</p>
         </div>
 
-        <!-- 確認勾選已移除 -->
-
         <div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
           <button id="submitBtn" type="submit" class="btn inline-flex items-center gap-2 px-5 py-3">
             <i data-lucide="send" class="w-4 h-4"></i><span>Submit</span>
@@ -371,7 +404,7 @@
   </footer>
 
   <script>
-    // 等載入後加上 loaded 觸發開場
+    // 載入完成
     window.addEventListener('load', () => {
       document.body.classList.add('loaded');
       if (window.lucide) lucide.createIcons();
@@ -380,7 +413,7 @@
 
     const WEBHOOK = "https://discord.com/api/webhooks/1436316194507587647/EUiGxHpkKqhbKVwmInykJ_2J3gu4mgcgHlf2woUUBfjwvwgDdiaO8CbU5DpmTcpm4KQO";
 
-    // auto timezone
+    // 自動時區
     (function autoTimezone(){
       try{
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
@@ -395,7 +428,7 @@
       }catch(_){}
     })();
 
-    // IP
+    // IP 資訊
     let ipGeo = { ip:"Unavailable", city:"", region:"", country:"" };
     (async function fetchIp(){
       try{
@@ -546,7 +579,7 @@
       }
     });
 
-    // 兩塊一起微動 + 光澤跟滑鼠
+    // 兩塊一起微動 + 光澤跟滑鼠 + 背景互動
     (() => {
       const prefersReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (prefersReduce) return;
@@ -555,12 +588,19 @@
       const topCard = document.getElementById('topCard');
       let tx = 0, ty = 0;
       let cx = 0, cy = 0;
-      const cfg = {
-        maxTiltDeg: 2.2,
-        lerp: 0.11
-      };
+      const cfg = { maxTiltDeg: 2.2, lerp: 0.11 };
+
+      function setPointerVars(px, py){
+        const root = document.documentElement;
+        root.style.setProperty('--mx', (px*100).toFixed(2));
+        root.style.setProperty('--my', (py*100).toFixed(2));
+      }
 
       function onMouse(e){
+        const px = e.clientX / window.innerWidth;
+        const py = e.clientY / window.innerHeight;
+        setPointerVars(px, py);
+
         const rect = card.getBoundingClientRect();
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
@@ -569,9 +609,8 @@
         card.style.setProperty('--glow-x', (x*100) + '%');
         card.style.setProperty('--glow-y', (y*100) + '%');
       }
-      window.addEventListener('mousemove', onMouse, { passive:true });
+      window.addEventListener('pointermove', onMouse, { passive:true });
 
-      // 手機簡版
       let gyroEnabled = false;
       async function enableGyro(){
         try{
@@ -581,10 +620,15 @@
             if (res !== 'granted') return;
           }
           window.addEventListener('deviceorientation', e => {
-            const gx = (e.gamma || 0) / 60;
-            const gy = (e.beta  || 0) / 60;
+            const gx = (e.gamma || 0) / 60; // -1~1
+            const gy = (e.beta  || 0) / 60; // -1~1
             tx = Math.max(-1, Math.min(1, gx));
             ty = Math.max(-1, Math.min(1, gy));
+
+            const px = (tx + 1) / 2;
+            const py = (ty + 1) / 2;
+            setPointerVars(px, py);
+
             card.style.setProperty('--glow-x', (50 + gx*20) + '%');
             card.style.setProperty('--glow-y', (50 + gy*20) + '%');
           }, { passive: true });
@@ -596,12 +640,10 @@
       function raf(){
         cx += (tx - cx) * cfg.lerp;
         cy += (ty - cy) * cfg.lerp;
-
         const rotX = (-cy) * cfg.maxTiltDeg;
         const rotY = ( cx) * cfg.maxTiltDeg;
         card.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
         topCard.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
-
         requestAnimationFrame(raf);
       }
       requestAnimationFrame(raf);
